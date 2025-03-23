@@ -1,7 +1,7 @@
 // app/layout.js atau app/layout.tsx
 "use client";
 import React, { useState, useEffect, Suspense } from "react";
-import Navbar from "./navbar";
+import Navbar from "./Navbar";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
