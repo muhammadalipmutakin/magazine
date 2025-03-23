@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "../../components/Layout";
 
@@ -15,22 +15,23 @@ export default function CategoryForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!categoryId) return;
+    const fetchCategoryData = async () => {
+      if (!categoryId) return;
 
-    fetch(`/api/categories/${categoryId}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: Gagal mengambil data kategori`);
-        }
-        return res.json();
-      })
-      .then((data) => {
+      try {
+        const res = await fetch(`/api/categories/${categoryId}`);
+        if (!res.ok) throw new Error(`Error ${res.status}: Gagal mengambil data kategori`);
+        const data = await res.json();
         if (data && data.name) {
           setName(data.name);
           setPreview(data.icon);
         }
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchCategoryData();
   }, [categoryId]);
 
   const handleFileChange = (e) => {
@@ -58,9 +59,7 @@ export default function CategoryForm() {
     if (icon) formData.append("icon", icon);
 
     const method = categoryId ? "PUT" : "POST";
-    const url = categoryId
-      ? `/api/categories/${categoryId}`
-      : "/api/categories";
+    const url = categoryId ? `/api/categories/${categoryId}` : "/api/categories";
 
     try {
       setLoading(true);
@@ -83,60 +82,62 @@ export default function CategoryForm() {
 
   return (
     <Layout>
-      <div className="mx-auto bg-white shadow-md rounded-lg text-black w-full max-w-lg sm:max-w-md">
-        <div className="p-4 sm:p-6">
-          <h2 className="text-xl sm:text-2xl font-bold mb-4">
-            {categoryId ? "Edit Kategori" : "Tambah Kategori"}
-          </h2>
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
-                Nama Kategori:
-              </label>
-              <input
-                type="text"
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
-                Ikon Kategori:
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                className="w-full p-2 border rounded-md text-sm sm:text-base"
-                onChange={handleFileChange}
-              />
-            </div>
-
-            {preview && (
-              <div className="mt-4">
-                <p className="text-gray-600 text-sm sm:text-base">Preview:</p>
-                <img
-                  src={preview}
-                  alt="Icon Preview"
-                  className="w-24 h-24 object-cover border rounded-md"
+      <Suspense fallback={<div>Loading...</div>}>
+        <div className="mx-auto bg-white shadow-md rounded-lg text-black w-full max-w-lg sm:max-w-md">
+          <div className="p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4">
+              {categoryId ? "Edit Kategori" : "Tambah Kategori"}
+            </h2>
+            <form onSubmit={handleSubmit} encType="multipart/form-data">
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                  Nama Kategori:
+                </label>
+                <input
+                  type="text"
+                  className="w-full p-2 border rounded-md text-sm sm:text-base"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
                 />
               </div>
-            )}
 
-            <button
-              type="submit"
-              className={`mt-4 w-full py-2 text-white rounded-md text-sm sm:text-base ${
-                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              }`}
-              disabled={loading}
-            >
-              {loading ? "Menyimpan..." : "Simpan"}
-            </button>
-          </form>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                  Ikon Kategori:
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full p-2 border rounded-md text-sm sm:text-base"
+                  onChange={handleFileChange}
+                />
+              </div>
+
+              {preview && (
+                <div className="mt-4">
+                  <p className="text-gray-600 text-sm sm:text-base">Preview:</p>
+                  <img
+                    src={preview}
+                    alt="Icon Preview"
+                    className="w-24 h-24 object-cover border rounded-md"
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className={`mt-4 w-full py-2 text-white rounded-md text-sm sm:text-base ${
+                  loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+                }`}
+                disabled={loading}
+              >
+                {loading ? "Menyimpan..." : "Simpan"}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      </Suspense>
     </Layout>
   );
 }
