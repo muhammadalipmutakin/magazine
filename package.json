@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "npm run prisma:generate && next build",
-    "start": "next start",
-    "lint": "next lint",
-    "prisma:generate": "prisma generate"
-  },
+  "dev": "next dev",
+  "build": "npm run prisma:generate && next build",
+  "start": "next start",
+  "lint": "next lint",
+  "prisma:generate": "npx prisma generate"
+},
   "dependencies": {
     "@lexical/react": "^0.27.2",
     "@lexical/rich-text": "^0.27.2",
