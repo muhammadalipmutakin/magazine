@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Layout from "../../components/Layout";
 
 export default function CategoryForm() {
-  const searchParams = useSearchParams();
-  const categoryId = searchParams.get("id");
+  const [isClient, setIsClient] = useState(false);
+  const [categoryId, setCategoryId] = useState(null);
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -15,24 +15,34 @@ export default function CategoryForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCategoryData = async () => {
-      if (!categoryId) return;
+    // Set isClient to true after mounting to ensure client-side code only
+    setIsClient(true);
+  }, []);
 
-      try {
-        const res = await fetch(`/api/categories/${categoryId}`);
-        if (!res.ok) throw new Error(`Error ${res.status}: Gagal mengambil data kategori`);
-        const data = await res.json();
-        if (data && data.name) {
-          setName(data.name);
-          setPreview(data.icon);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
+  useEffect(() => {
+    if (!isClient) return;
 
-    fetchCategoryData();
-  }, [categoryId]);
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryIdFromUrl = urlParams.get("id");
+    setCategoryId(categoryIdFromUrl);
+
+    if (categoryIdFromUrl) {
+      fetch(`/api/categories/${categoryIdFromUrl}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`Error ${res.status}: Gagal mengambil data kategori`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (data && data.name) {
+            setName(data.name);
+            setPreview(data.icon);
+          }
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+    }
+  }, [isClient]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -80,64 +90,66 @@ export default function CategoryForm() {
     }
   };
 
+  if (!isClient) {
+    return null; // Jangan render apa pun jika belum client-side
+  }
+
   return (
     <Layout>
-      <Suspense fallback={<div>Loading...</div>}>
-        <div className="mx-auto bg-white shadow-md rounded-lg text-black w-full max-w-lg sm:max-w-md">
-          <div className="p-4 sm:p-6">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4">
-              {categoryId ? "Edit Kategori" : "Tambah Kategori"}
-            </h2>
-            <form onSubmit={handleSubmit} encType="multipart/form-data">
-              <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
-                  Nama Kategori:
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-2 border rounded-md text-sm sm:text-base"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
+      <div className="mx-auto bg-white shadow-md rounded-lg text-black w-full max-w-lg sm:max-w-md">
+        <div className="p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">
+            {categoryId ? "Edit Kategori" : "Tambah Kategori"}
+          </h2>
+          <form onSubmit={handleSubmit} encType="multipart/form-data">
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                Nama Kategori:
+              </label>
+              <input
+                type="text"
+                className="w-full p-2 border rounded-md text-sm sm:text-base"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
+                Ikon Kategori:
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                className="w-full p-2 border rounded-md text-sm sm:text-base"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {preview && (
+              <div className="mt-4">
+                <p className="text-gray-600 text-sm sm:text-base">Preview:</p>
+                <img
+                  src={preview}
+                  alt="Icon Preview"
+                  className="w-24 h-24 object-cover border rounded-md"
                 />
               </div>
+            )}
 
-              <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2 text-sm sm:text-base">
-                  Ikon Kategori:
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="w-full p-2 border rounded-md text-sm sm:text-base"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              {preview && (
-                <div className="mt-4">
-                  <p className="text-gray-600 text-sm sm:text-base">Preview:</p>
-                  <img
-                    src={preview}
-                    alt="Icon Preview"
-                    className="w-24 h-24 object-cover border rounded-md"
-                  />
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className={`mt-4 w-full py-2 text-white rounded-md text-sm sm:text-base ${
-                  loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-                }`}
-                disabled={loading}
-              >
-                {loading ? "Menyimpan..." : "Simpan"}
-              </button>
-            </form>
-          </div>
+            <button
+              type="submit"
+              className={`mt-4 w-full py-2 text-white rounded-md text-sm sm:text-base ${
+                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              }`}
+              disabled={loading}
+            >
+              {loading ? "Menyimpan..." : "Simpan"}
+            </button>
+          </form>
         </div>
-      </Suspense>
+      </div>
     </Layout>
   );
 }
