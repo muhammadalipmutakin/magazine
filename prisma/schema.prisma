@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  icon      String
+  blogs     Blog[]
+  deletedAt DateTime?
+}
+
+model Blog {
+  id         Int      @id @default(autoincrement())
+  headline   String
+  title      String
+  content    String   @db.Text
+  isFeature  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId Int
+  author     Author   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   Int
+  deletedAt  DateTime?
+}
+
+model Author {
+  id          Int       @id @default(autoincrement())
+  name        String
+  username    String    @unique
+  password    String    @db.Text
+  profesi     String    @db.Text
+  foto        String
+  blogs       Blog[]
+  deletedAt   DateTime?
+  isActive    Boolean   @default(false)
+}
+
+model Iklan {
+  id        Int      @id @default(autoincrement())
+  judul     String
+  gambar    String
+  jenis     String
+  link      String
+  deletedAt DateTime?
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  username  String   @unique
+  password  String   @db.Text
+  deletedAt DateTime?
+}
+
+model Visitor {
+  id        Int       @id @default(autoincrement())
+  visitTime DateTime[] // Ubah ke DateTime[]
+  device    String    
+  browser   String    
+  os        String    
+  location  String?   
+  ipAddress String?   
+  createdAt DateTime  @default(now()) 
+  deletedAt DateTime? 
+}
